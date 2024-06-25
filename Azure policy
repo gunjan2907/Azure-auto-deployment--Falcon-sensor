@@ -1,0 +1,78 @@
+{
+  "mode": "All",
+  "policyRule": {
+    "if": {
+      "allOf": [
+        {
+          "field": "type",
+          "equals": "Microsoft.Compute/virtualMachines"
+        },
+        {
+          "field": "Microsoft.Compute/virtualMachines/storageProfile.osDisk.osType",
+          "equals": "Windows"
+        }
+      ]
+    },
+    "then": {
+      "effect": "deployIfNotExists",
+      "details": {
+        "type": "Microsoft.Compute/virtualMachines",
+        "existenceCondition": {
+          "allOf": [
+            {
+              "count": {
+                "field": "Microsoft.Compute/virtualMachines/applicationProfile.galleryApplications[*]",
+                "where": {
+                  "field": "Microsoft.Compute/virtualMachines/applicationProfile.galleryApplications[*].packageReferenceId",
+                  "equals": "/subscriptions/426bab87-466e-462c-a4c9-41e0703ac323/resourceGroups/myRG/providers/Microsoft.Compute/galleries/mygallery/applications/myapp/versions/2.9.7"
+                }
+              },
+              "greater": 0
+            }
+          ]
+        },
+        "evaluationDelay": "AfterProvisioningSuccess",
+        "roleDefinitionIds": [
+          "/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
+        ],
+        "deployment": {
+          "properties": {
+            "mode": "incremental",
+            "template": {
+              "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+              "contentVersion": "1.0.0.0",
+              "parameters": {
+                "vmName": {
+                  "type": "string"
+                },
+                "location": {
+                  "type": "string"
+                }
+              },
+              "resources": [
+                {
+                  "apiVersion": "2021-07-01",
+                  "type": "Microsoft.Compute/virtualMachines/VMapplications",
+                  "name": "[concat(parameters('vmName'),'/myapp')]",
+                  "location": "[parameters('location')]",
+                  "properties": {
+                    "packageReferenceId": "/subscriptions/426bab87-466e-462c-a4c9-41e0703ac323/resourceGroups/myRG/providers/Microsoft.Compute/galleries/mygallery/applications/myapp/versions/2.9.7"
+                  }
+                }
+              ]
+            },
+            "parameters": {
+              "vmName": {
+                "value": "[field('name')]"
+              },
+              "location": {
+                "value": "[field('location')]"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "parameters": {}
+}
